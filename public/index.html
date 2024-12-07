@@ -34,32 +34,21 @@
             resultDiv.textContent = 'Uploading and transcribing...';
 
             try {
-                // 1. העלאת קובץ האודיו לשירות אחסון
-                const uploadResponse = await fetch('https://api.upload.io/upload', {
+                // קריאה לפונקציה של Netlify להעלאה ותמלול
+                const response = await fetch('/.netlify/functions/transcribe', {
                     method: 'POST',
-                    headers: {
-                        Authorization: `Bearer YOUR_UPLOAD_API_KEY`,
-                    },
                     body: formData,
                 });
 
-                const uploadData = await uploadResponse.json();
-                const audioUrl = uploadData.fileUrl; // URL של הקובץ שהועלה
-
-                // 2. שליחת ה-URL לפונקציה serverless
-                const response = await fetch('/.netlify/functions/transcribe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ audioUrl }),
-                });
-
-                const transcription = await response.json();
-                resultDiv.textContent = transcription.text || 'Transcription failed.';
+                const data = await response.json();
+                if (data.text) {
+                    resultDiv.textContent = `Transcription: ${data.text}`;
+                } else {
+                    resultDiv.textContent = 'Transcription failed.';
+                }
             } catch (error) {
-                console.error(error);
-                resultDiv.textContent = 'Error during transcription. Please try again.';
+                console.error('Error:', error);
+                resultDiv.textContent = 'Error during transcription.';
             }
         });
     </script>
