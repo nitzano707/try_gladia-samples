@@ -35,7 +35,7 @@
                 resultDiv.textContent = 'Uploading and transcribing...';
 
                 try {
-                    // קריאה לפונקציית Netlify כפרוקסי עבור Upload.io
+                    // קריאה לפונקציית Netlify להעלאת הקובץ
                     const uploadResponse = await fetch('/.netlify/functions/upload', {
                         method: 'POST',
                         body: formData,
@@ -46,26 +46,32 @@
                     }
 
                     const uploadData = await uploadResponse.json();
-                    const audioUrl = uploadData.fileUrl;
+                    const audioUrl = uploadData.audio_url; // כתובת הקובץ שהועלה
 
-                    // קריאה לפונקציית Netlify לתמלול
-                    const response = await fetch('/.netlify/functions/transcribe', {
+                    console.log('File uploaded successfully. Audio URL:', audioUrl);
+
+                    // קריאה לפונקציית Netlify לביצוע תמלול
+                    const transcriptionResponse = await fetch('/.netlify/functions/transcribe', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ audioFile: audioUrl }),
                     });
 
-                    const data = await response.json();
-                    console.log('Response from server:', data);
+                    if (!transcriptionResponse.ok) {
+                        throw new Error('Transcription failed.');
+                    }
 
-                    if (data.error) {
-                        resultDiv.textContent = `Error: ${data.error}`;
+                    const transcriptionData = await transcriptionResponse.json();
+                    console.log('Transcription response:', transcriptionData);
+
+                    if (transcriptionData.error) {
+                        resultDiv.textContent = `Error: ${transcriptionData.error}`;
                     } else {
-                        resultDiv.textContent = `Transcription: ${data.text || 'No transcription text available.'}`;
+                        resultDiv.textContent = `Transcription: ${transcriptionData.text || 'No transcription text available.'}`;
                     }
                 } catch (error) {
-                    console.error('Error during transcription:', error);
-                    resultDiv.textContent = 'Error during transcription. Check console for details.';
+                    console.error('Error during transcription process:', error);
+                    resultDiv.textContent = 'Error during transcription process. Check console for details.';
                 }
             });
         });
