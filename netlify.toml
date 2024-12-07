@@ -1,21 +1,9 @@
 [build]
-  # נתיב לתיקיית הקבצים הסטטיים שלך (קבצי פרונט-אנד)
-  publish = "public"
-
-  # נתיב לתיקיית הפונקציות serverless שלך
-  functions = "netlify/functions"
+  publish = "public"  # נתיב לקבצים הסטטיים שלך
+  functions = "netlify/functions"  # נתיב לפונקציות Serverless
 
 [functions]
-  # שימוש ב-esbuild כדי לבנות את הפונקציות בצורה אופטימלית
-  node_bundler = "esbuild"
-
-  # אם יש חבילות שצריכות להישאר חיצוניות (כגון node-fetch)
-  external_node_modules = ["node-fetch"]
+  node_bundler = "esbuild"  # בונה את הפונקציות בצורה אופטימלית
 
 [build.environment]
-  # הגדרת גרסת Node.js (אם נדרשת)
-  NODE_VERSION = "18"
-
-[dev]
-  # יצירת proxy לפונקציות serverless במהלך פיתוח מקומי
-  functions = "netlify/functions"
+  NODE_VERSION = "18"  # גרסת Node.js
