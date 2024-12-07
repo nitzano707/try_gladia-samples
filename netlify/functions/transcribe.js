@@ -20,7 +20,6 @@ export const handler = async (event) => {
             };
         }
 
-        // קבלת הנתונים מהבקשה
         const { audioFile } = JSON.parse(event.body);
         if (!audioFile) {
             console.error('Missing audio file in request body');
