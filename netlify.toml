@@ -1,9 +1,9 @@
 [build]
-  publish = "public"  # נתיב לקבצים הסטטיים שלך
-  functions = "netlify/functions"  # נתיב לפונקציות Serverless
+  publish = "public"
+  functions = "netlify/functions"
 
 [functions]
-  node_bundler = "esbuild"  # בונה את הפונקציות בצורה אופטימלית
+  node_bundler = "esbuild"
 
 [build.environment]
-  NODE_VERSION = "18"  # גרסת Node.js
+  NODE_VERSION = "18"
