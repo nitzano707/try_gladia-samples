@@ -12,7 +12,6 @@ export const handler = async (event) => {
     }
 
     try {
-        // בדיקת סוג הבקשה
         if (event.httpMethod !== 'POST') {
             console.error('Invalid HTTP method:', event.httpMethod);
             return {
@@ -21,14 +20,13 @@ export const handler = async (event) => {
             };
         }
 
-        console.log('Received request:', event);
-
         const formData = new FormData();
-        formData.append('audio', event.body);
+        formData.append('file', event.body);
 
-        console.log('Sending request to Gladia API...');
+        console.log('Initiating transcription with Gladia...');
 
-        const response = await fetch('https://api.gladia.io/upload/audio-file', {
+        // Step 1: Initiate transcription
+        const initResponse = await fetch('https://api.gladia.io/v2/transcription/init', {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${GLADIA_API_KEY}`,
@@ -36,24 +34,63 @@ export const handler = async (event) => {
             body: formData,
         });
 
-        console.log('Response from Gladia API:', response);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error from Gladia API:', errorText);
+        if (!initResponse.ok) {
+            const errorText = await initResponse.text();
+            console.error('Error initiating transcription:', errorText);
             return {
-                statusCode: response.status,
+                statusCode: initResponse.status,
                 body: JSON.stringify({ error: errorText }),
             };
         }
 
-        const data = await response.json();
-        console.log('Data from Gladia API:', data);
+        const initData = await initResponse.json();
+        const transcriptionId = initData.transcription_id;
+        console.log('Transcription initiated. ID:', transcriptionId);
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(data),
-        };
+        // Step 2: Poll for transcription result
+        let status = 'pending';
+        let transcriptionData = null;
+        while (status === 'pending') {
+            console.log('Polling transcription status...');
+            const statusResponse = await fetch(`https://api.gladia.io/v2/transcription/get?transcription_id=${transcriptionId}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${GLADIA_API_KEY}`,
+                },
+            });
+
+            if (!statusResponse.ok) {
+                const errorText = await statusResponse.text();
+                console.error('Error polling transcription status:', errorText);
+                return {
+                    statusCode: statusResponse.status,
+                    body: JSON.stringify({ error: errorText }),
+                };
+            }
+
+            transcriptionData = await statusResponse.json();
+            status = transcriptionData.status;
+
+            console.log('Transcription status:', status);
+            if (status === 'pending') {
+                await new Promise((resolve) => setTimeout(resolve, 3000)); // המתן 3 שניות
+            }
+        }
+
+        // Step 3: Return final result
+        if (status === 'completed') {
+            console.log('Transcription completed:', transcriptionData);
+            return {
+                statusCode: 200,
+                body: JSON.stringify(transcriptionData),
+            };
+        } else {
+            console.error('Transcription failed:', transcriptionData);
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Transcription failed', details: transcriptionData }),
+            };
+        }
     } catch (error) {
         console.error('Error during transcription process:', error);
         return {
