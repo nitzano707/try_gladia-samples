@@ -35,12 +35,9 @@
                 resultDiv.textContent = 'Uploading and transcribing...';
 
                 try {
-                    // העלאת הקובץ וקבלת URL
-                    const uploadResponse = await fetch('https://api.upload.io/upload', {
+                    // קריאה לפונקציית Netlify כפרוקסי עבור Upload.io
+                    const uploadResponse = await fetch('/.netlify/functions/upload', {
                         method: 'POST',
-                        headers: {
-                            Authorization: `Bearer YOUR_UPLOAD_API_KEY`, // החלף את YOUR_UPLOAD_API_KEY במפתח שלך
-                        },
                         body: formData,
                     });
 
@@ -51,7 +48,7 @@
                     const uploadData = await uploadResponse.json();
                     const audioUrl = uploadData.fileUrl;
 
-                    // שליחת הבקשה לפונקציית Netlify
+                    // קריאה לפונקציית Netlify לתמלול
                     const response = await fetch('/.netlify/functions/transcribe', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
