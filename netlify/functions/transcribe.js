@@ -13,7 +13,6 @@ export const handler = async (event) => {
 
     try {
         if (event.httpMethod !== 'POST') {
-            console.error('Invalid HTTP method:', event.httpMethod);
             return {
                 statusCode: 405,
                 body: JSON.stringify({ error: 'Only POST method is allowed.' }),
@@ -22,7 +21,6 @@ export const handler = async (event) => {
 
         const { audioFile } = JSON.parse(event.body);
         if (!audioFile) {
-            console.error('Missing audio file in request body');
             return {
                 statusCode: 400,
                 body: JSON.stringify({ error: 'Audio file is required in request body.' }),
@@ -31,16 +29,13 @@ export const handler = async (event) => {
 
         console.log('Initiating transcription with Gladia API...');
 
-        // שליחת הבקשה ל-Gladia API
-        const response = await fetch('https://api.gladia.io/v2/transcription/init', {
+        const response = await fetch('https://api.gladia.io/v2/upload', {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${GLADIA_API_KEY}`,
+                'x-gladia-key': GLADIA_API_KEY,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                url: audioFile, // URL של קובץ האודיו
-            }),
+            body: JSON.stringify({ url: audioFile }),
         });
 
         if (!response.ok) {
