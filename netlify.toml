@@ -1,0 +1,6 @@
+[build]
+  functions = "netlify/functions"  # נתיב לפונקציות Serverless
+  publish = "public"              # נתיב לקבצים הסטטיים (HTML, CSS וכו')
+
+[functions]
+  node_bundler = "esbuild"        # שימוש ב-esbuild לאופטימיזציה
