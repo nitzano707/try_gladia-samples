@@ -1,53 +1,77 @@
-<script>
-    const form = document.getElementById('audioForm');
-    const resultDiv = document.getElementById('result');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription App</title>
+</head>
+<body>
+    <h1>Upload Audio for Transcription</h1>
+    <form id="audioForm">
+        <label for="audioFile">Select an audio file:</label>
+        <input type="file" id="audioFile" accept="audio/*" required>
+        <button type="submit">Transcribe</button>
+    </form>
+    <div id="result" style="margin-top: 20px;"></div>
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fileInput = document.getElementById('audioFile');
-        const file = fileInput.files[0];
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('audioForm');
+            const resultDiv = document.getElementById('result');
 
-        if (!file) {
-            alert('Please select an audio file.');
-            return;
-        }
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fileInput = document.getElementById('audioFile');
+                const file = fileInput.files[0];
 
-        const formData = new FormData();
-        formData.append('file', file);
+                if (!file) {
+                    alert('Please select an audio file.');
+                    return;
+                }
 
-        resultDiv.textContent = 'Uploading and transcribing...';
+                const formData = new FormData();
+                formData.append('file', file);
 
-        try {
-            // העלאת הקובץ ושמירת ה-URL
-            const uploadResponse = await fetch('https://api.upload.io/upload', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer YOUR_UPLOAD_API_KEY`,
-                },
-                body: formData,
+                resultDiv.textContent = 'Uploading and transcribing...';
+
+                try {
+                    // העלאת הקובץ וקבלת URL
+                    const uploadResponse = await fetch('https://api.upload.io/upload', {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer YOUR_UPLOAD_API_KEY`, // החלף את YOUR_UPLOAD_API_KEY במפתח שלך
+                        },
+                        body: formData,
+                    });
+
+                    if (!uploadResponse.ok) {
+                        throw new Error('File upload failed.');
+                    }
+
+                    const uploadData = await uploadResponse.json();
+                    const audioUrl = uploadData.fileUrl;
+
+                    // שליחת הבקשה לפונקציית Netlify
+                    const response = await fetch('/.netlify/functions/transcribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ audioFile: audioUrl }),
+                    });
+
+                    const data = await response.json();
+                    console.log('Response from server:', data);
+
+                    if (data.error) {
+                        resultDiv.textContent = `Error: ${data.error}`;
+                    } else {
+                        resultDiv.textContent = `Transcription: ${data.text || 'No transcription text available.'}`;
+                    }
+                } catch (error) {
+                    console.error('Error during transcription:', error);
+                    resultDiv.textContent = 'Error during transcription. Check console for details.';
+                }
             });
-
-            const uploadData = await uploadResponse.json();
-            const audioUrl = uploadData.fileUrl;
-
-            // קריאה לפונקציית Netlify
-            const response = await fetch('/.netlify/functions/transcribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ audioFile: audioUrl }),
-            });
-
-            const data = await response.json();
-            console.log('Response from server:', data);
-
-            if (data.error) {
-                resultDiv.textContent = `Error: ${data.error}`;
-            } else {
-                resultDiv.textContent = `Transcription: ${data.text || 'No transcription text available.'}`;
-            }
-        } catch (error) {
-            console.error('Error during transcription:', error);
-            resultDiv.textContent = 'Error during transcription. Check console for details.';
-        }
-    });
-</script>
+        });
+    </script>
+</body>
+</html>
