@@ -1,9 +1,11 @@
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
+    // קבלת URL של קובץ האודיו מתוך הבקשה
     const { audioUrl } = JSON.parse(event.body);
-    const GLADIA_API_KEY = process.env.GLADIA_API_KEY;
+    const GLADIA_API_KEY = process.env.GLADIA_API_KEY; // מפתח ה-API מוגדר במשתנה סביבה
 
+    // בדיקת קיום מפתח API
     if (!GLADIA_API_KEY) {
         return {
             statusCode: 500,
@@ -12,6 +14,7 @@ exports.handler = async (event) => {
     }
 
     try {
+        // קריאה ל-API של Gladia עם נתיב התמלול
         const response = await fetch('https://api.gladia.io/audio/text/transcription', {
             method: 'POST',
             headers: {
@@ -21,12 +24,17 @@ exports.handler = async (event) => {
             body: JSON.stringify({ url: audioUrl }),
         });
 
+        // בדיקת תגובת ה-API ועיבוד הפלט
         const data = await response.json();
+
+        // החזרת הפלט ללקוח
         return {
             statusCode: 200,
             body: JSON.stringify(data),
         };
     } catch (error) {
+        // טיפול בשגיאות
+        console.error('Error during transcription:', error);
         return {
             statusCode: 500,
             body: JSON.stringify({ error: 'Error transcribing audio', details: error.message }),
