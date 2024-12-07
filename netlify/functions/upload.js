@@ -1,31 +1,44 @@
 import fetch from 'node-fetch';
+import FormData from 'form-data';
 
 export const handler = async (event) => {
-    const UPLOAD_API_KEY = process.env.UPLOAD_API_KEY;
+    const GLADIA_API_KEY = process.env.GLADIA_API_KEY;
 
-    if (!UPLOAD_API_KEY) {
-        console.error('Missing Upload API key');
+    if (!GLADIA_API_KEY) {
+        console.error('Missing API key');
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Missing Upload API key in environment variables.' }),
+            body: JSON.stringify({ error: 'Missing API key in environment variables.' }),
         };
     }
 
     try {
-        const formData = new FormData();
-        formData.append('file', event.body);
+        if (event.httpMethod !== 'POST') {
+            return {
+                statusCode: 405,
+                body: JSON.stringify({ error: 'Only POST method is allowed.' }),
+            };
+        }
 
-        const response = await fetch('https://api.upload.io/upload', {
+        // קבלת הקובץ מהבקשה
+        const formData = new FormData();
+        const fileBuffer = Buffer.from(event.body, 'base64'); // assuming the file is sent as base64
+        formData.append('audio', fileBuffer, 'audio.wav');
+
+        console.log('Uploading file to Gladia API...');
+
+        // שליחת הבקשה ל-Gladia API
+        const response = await fetch('https://api.gladia.io/v2/upload', {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${UPLOAD_API_KEY}`,
+                'x-gladia-key': GLADIA_API_KEY,
             },
             body: formData,
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Error from Upload.io:', errorText);
+            console.error('Error from Gladia API:', errorText);
             return {
                 statusCode: response.status,
                 body: JSON.stringify({ error: errorText }),
